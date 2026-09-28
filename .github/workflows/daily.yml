@@ -1,0 +1,39 @@
+﻿name: Daily CRM Reconciliation
+
+on:
+  schedule:
+    - cron: "0 9 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  reconcile:
+    runs-on: ubuntu-latest
+
+    env:
+      BELLHAVEN_URL: https://analyst-assessment-production.up.railway.app
+      CRM_API_BASE_URL: https://analyst-assessment-production.up.railway.app/api/v1
+      CRM_API_TOKEN: ${{ secrets.CRM_API_TOKEN }}
+      BELLHAVEN_PARENT_ACCOUNT_ID: ""
+      CRM_WRITE_ENABLED: "false"
+      DECISIONS_DB_PATH: data/decisions.db
+      DECISIONS_LEDGER_PATH: decisions/ledger.jsonl
+      REVIEWER_NAME: github-actions
+      LOG_LEVEL: INFO
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run read-only reconciliation
+        run: python -m matcher.reconcile --dry-run
